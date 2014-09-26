@@ -1,6 +1,6 @@
 {
   "name": "dbfm-app-sdk",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "douban fm app-sdk",
   "main": "index.js",
   "repository": {
@@ -18,7 +18,8 @@
   "license": "MIT",
   "homepage": "https://github.com/sapjax/dbfm-app-sdk",
   "dependencies": {
-    "request": "^2.42.0"
+    "request": "^2.42.0",
+    "safe-parse": "0.0.0"
   },
   "bugs": {
     "url": "https://github.com/sapjax/dbfm-app-sdk/issues"

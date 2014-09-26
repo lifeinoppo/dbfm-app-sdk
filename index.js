@@ -1,5 +1,6 @@
 var util = require('util')
 var request = require('request')
+var safeParse = require('safe-parse')
 
 var apis = require('./lib/apis')
 var APP_NAME = 'radio_desktop_win'
@@ -28,7 +29,7 @@ SDK.prototype.login = function(opt, cb) {
 		form : true
 	}, function(err, res, body) {
 		if(err) return cb(err)
-		body = JSON.parse(body)
+		body = safeParse(body) || {}
 		self._userInfo = body
 		cb(null, body)
 	})
@@ -59,8 +60,8 @@ SDK.prototype.channels = function(opt, cb) {
 		},
 	}, function(err, res, body) {
 		if(err) return cb(err)
-		body = JSON.parse(body)
-		cb(null, body.channels)
+		body = safeParse(body) || {}
+		cb(null, body.channels || [])
 	})
 }
 
@@ -83,8 +84,8 @@ SDK.prototype.songs = function(opt, cb) {
 		}
 	}, function (err, res, body) {
 		if (err) return cb(err)
-		body = JSON.parse(body)
-		cb(null, body.song)
+		body = safeParse(body) || {}
+		cb(null, body.song || [])
 	})
 }
 
@@ -127,7 +128,7 @@ SDK.prototype.fav_channels = function(opt, cb) {
 		}
 	}, function (err, res, body) {
 		if (err) return cb(err)
-		body = JSON.parse(body)
+		body = JSON.parse(body) || {}
 		cb(null, body)
 	})
 }
