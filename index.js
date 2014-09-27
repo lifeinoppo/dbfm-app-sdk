@@ -1,14 +1,24 @@
 var util = require('util')
 var request = require('request')
-var safeParse = require('safe-parse')
 
 var apis = require('./lib/apis')
-var APP_NAME = 'radio_desktop_win'
+var headers = require('./lib/custom-headers.json')
+var APP_NAME = 'radio_desktop_mac'
 var APP_VERSION = 100
+
 var noop = function () {}
+var safeParse = function(res) {
+	res = res.toJSON()
+	if(res.statusCode == 200) {
+		return JSON.parse(res.body)
+	} else {
+		console.error(res.request.uri, res.body)
+	}
+}
 
 request = request.defaults({
-	headers : require('./lib/custom-headers.json')
+	jar : true,
+	headers : headers
 })
 
 function SDK() {
@@ -29,9 +39,11 @@ SDK.prototype.login = function(opt, cb) {
 		form : true
 	}, function(err, res, body) {
 		if(err) return cb(err)
-		body = safeParse(body) || {}
-		self._userInfo = body
-		cb(null, body)
+		body = safeParse(res)
+		if(body) {
+			self._userInfo = body
+			cb(null, body)
+		}
 	})
 }
 
@@ -60,8 +72,10 @@ SDK.prototype.channels = function(opt, cb) {
 		},
 	}, function(err, res, body) {
 		if(err) return cb(err)
-		body = safeParse(body) || {}
-		cb(null, body.channels || [])
+		body = safeParse(res)
+		if(body) {
+			cb(null, body.channels || [])
+		}
 	})
 }
 
@@ -84,8 +98,10 @@ SDK.prototype.songs = function(opt, cb) {
 		}
 	}, function (err, res, body) {
 		if (err) return cb(err)
-		body = safeParse(body) || {}
-		cb(null, body.song || [])
+		body = safeParse(res)
+		if(body) {
+			cb(null, body.song || [])
+		}
 	})
 }
 
@@ -128,8 +144,10 @@ SDK.prototype.fav_channels = function(opt, cb) {
 		}
 	}, function (err, res, body) {
 		if (err) return cb(err)
-		body = JSON.parse(body) || {}
-		cb(null, body)
+		body = safeParse(res)
+		if(body) {
+			cb(null, body)
+		}
 	})
 }
 
