@@ -1,6 +1,6 @@
 {
   "name": "dbfm-app-sdk",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "douban fm app-sdk",
   "main": "index.js",
   "repository": {
@@ -18,6 +18,7 @@
   "license": "MIT",
   "homepage": "https://github.com/sapjax/dbfm-app-sdk",
   "dependencies": {
+    "easy-guid": "^0.1.3",
     "request": "^2.42.0"
   },
   "bugs": {
@@ -28,7 +29,8 @@
   },
   "readme": "##### 豆瓣电台sdk\n\n这是app端的接口封装的sdk，不用于[Douban-FM-sdk](https://github.com/ampm/Douban-FM-sdk)\n\n#####examples:\n```javascript\n    var sdk = require('dbfm-app-sdk')\n\n    //登录\n    sdk.login({\n        email: 'xxxx@gmail.com',\n        password : '123456'\n    }, function(err, body) {\n        if(err) console.err(err)\n        console.log(body)\n    }\n\n    //获取channel列表\n    sdk.channels({ }, function(err, channels) {\n        if(err) console.err(err)\n        console.log(channels)\n    }\n\n    //根据channel_id获取歌曲列表\n    sdk.songs({\n        channel_id : '123'\n    }, function(err, songs) {\n        console.log(songs\n    }\n\n    //不发送登录请求直接设置登录信息\n    sdk.storage({\n        token : 'ajslfxajfasdf',\n        expire : '1426941666',\n        user_id : '3424234324'\n    })\n```\n",
   "readmeFilename": "README",
-  "_id": "dbfm-app-sdk@0.0.1",
+  "_id": "dbfm-app-sdk@0.0.4",
   "_shasum": "f9a901cba9bfc931c3da89aa690faa2f474c58bf",
-  "_from": "dbfm-app-sdk@"
+  "_from": "dbfm-app-sdk@0.0.4",
+  "_resolved": "https://registry.npmjs.org/dbfm-app-sdk/-/dbfm-app-sdk-0.0.4.tgz"
 }

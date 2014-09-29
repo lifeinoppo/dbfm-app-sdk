@@ -1,20 +1,27 @@
 var util = require('util')
 var request = require('request')
+var cheerio = require('cheerio')
 
 var apis = require('./lib/apis')
 var headers = require('./lib/custom-headers.json')
-var APP_NAME = 'radio_desktop_mac'
+var APP_NAME = 'radio_desktop_win'
 var APP_VERSION = 100
+var APP_FROM = 'mainsite'
 
 var noop = function () {}
 var safeParse = function(res) {
-	res = res.toJSON()
 	if(res.statusCode == 200) {
 		return JSON.parse(res.body)
 	} else {
 		console.error(res.request.uri, res.body)
 	}
 }
+
+
+//生成临时cookie
+var guid = require('easy-guid')
+var guidCookie = 'bid=' + guid.new(16)
+headers.Cookie = guidCookie
 
 request = request.defaults({
 	jar : true,
@@ -34,7 +41,8 @@ SDK.prototype.login = function(opt, cb) {
 			email: opt.email,
 			password: opt.password,
 			app_name : APP_NAME,
-			version: APP_VERSION
+			version: APP_VERSION,
+			from : APP_FROM
 		},
 		form : true
 	}, function(err, res, body) {
@@ -68,7 +76,8 @@ SDK.prototype.channels = function(opt, cb) {
 			token : self._userInfo.token,
 			expire : self._userInfo.expire,
 			app_name : APP_NAME,
-			version: APP_VERSION
+			version: APP_VERSION,
+			from: APP_FROM
 		},
 	}, function(err, res, body) {
 		if(err) return cb(err)
@@ -87,10 +96,12 @@ SDK.prototype.songs = function(opt, cb) {
 		qs: {
 			app_name : APP_NAME,
 			version: APP_VERSION,
+			from: APP_FROM,
 			token: self._userInfo.token,
 			expire: self._userInfo.expire,
 			user_id: self._userInfo.user_id,
 			channel: opt.channel_id,
+			context : opt.context,
 			sid: opt.sid,
 			type: opt.type || 'n',
 			pt: opt.pt || '',
@@ -130,23 +141,93 @@ SDK.prototype.never_play_again = function(opt, cb) {
 	this.songs(opt, cb)
 }
 
-//我收藏的频道
-SDK.prototype.fav_channels = function(opt, cb) {
+//获取个人主页html
+SDK.prototype.avatar = function(cb) {
 	var self = this
 	cb = cb || noop
-	request(apis.fav_channels, {
-		qs: {
-			app_name : APP_NAME,
-			version: APP_VERSION,
-			token: self._userInfo.token,
-			expire: self._userInfo.expire,
-			user_id: self._userInfo.user_id
-		}
+	request('http://www.douban.com/people/' + self._userInfo.user_id, {
 	}, function (err, res, body) {
 		if (err) return cb(err)
+		var CQuery = cheerio.load(body)
+		var userface = CQuery('#db-usr-profile img')
+		if(userface && userface.length) {
+			body = userface.attr('src')
+			cb(null, body)
+		}
+	})
+}
+
+//从豆瓣获取歌词
+SDK.prototype.lyric = function(opt, cb) {
+	var self = this
+	cb = cb || noop
+	request('http://music.douban.com/api/song/info', {
+		headers : {
+			HOST: 'music.douban.com',
+			Referer : "http://music.douban.com/",
+			Cookie : guidCookie
+		},
+		qs : {
+			song_id : opt.song_id
+		}
+	},function(err, res, body) {
+		if(err) return console.error(err)
 		body = safeParse(res)
 		if(body) {
-			cb(null, body)
+			cb(null, body.lyric)
+		}
+	})
+}
+
+//歌曲搜索
+SDK.prototype.music_search = function(opt, cb) {
+	var self = this
+	cb = cb || noop
+	request('http://music.douban.com/subject_search', {
+		headers : {
+			HOST: 'music.douban.com',
+			Referer : "http://music.douban.com/",
+			Cookie : guidCookie
+		},
+		qs : {
+			search_text: opt.search_text,
+			start: opt.start
+		}
+	}, function(err, res, body) {
+		if(err) return console.error(err)
+		if(res.statusCode == 200) {
+			var subjects = []
+			var CQuery = cheerio.load(body)
+			console.log(body)
+
+			//序列化dom数据
+			function serialize(el) {
+				var a = el.find('.nbg').eq(0)
+				//是否可以播放
+//				if(el.find('.start_radio').length) {
+				return {
+					subject: true,
+					url: a.attr('href'),
+					id: a.attr('href').match(/subject\/(\d+)/i)[1],
+					cover: a.find('img').eq(0).attr('src'),
+					cantPlay: el.find('.start_radio').length < 1,
+					name: el.find('.pl2 a').eq(0).text(),
+					intro: el.find('p').eq(0).text()
+				}
+//				}
+			}
+
+			//获取专辑列表
+			var items = CQuery('.item')
+			console.log(items)
+			items.each(function(i, item) {
+				var subject = serialize(CQuery(item))
+				console.log(subject)
+				subject && subjects.push(subject)
+			})
+			cb(null, subjects)
+		} else {
+			console.error(res.request.uri, res.body)
 		}
 	})
 }
