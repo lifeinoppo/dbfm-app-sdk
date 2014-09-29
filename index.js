@@ -88,6 +88,28 @@ SDK.prototype.channels = function(opt, cb) {
 	})
 }
 
+//获取用户信息
+SDK.prototype.user_info = function(opt, cb) {
+	var self = this
+	cb = cb || noop
+	request(apis.user_info, {
+		qs : {
+			token : self._userInfo.token,
+			expire : self._userInfo.expire,
+			user_id: self._userInfo.user_id,
+			app_name : APP_NAME,
+			version: APP_VERSION,
+			from: APP_FROM
+		},
+	}, function(err, res, body) {
+		if(err) return cb(err)
+		body = safeParse(res)
+		if(body) {
+			cb(null, body)
+		}
+	})
+}
+
 //根据频道获取歌曲列表
 SDK.prototype.songs = function(opt, cb) {
 	var self = this
@@ -141,22 +163,6 @@ SDK.prototype.never_play_again = function(opt, cb) {
 	this.songs(opt, cb)
 }
 
-//获取个人主页html
-SDK.prototype.avatar = function(cb) {
-	var self = this
-	cb = cb || noop
-	request('http://www.douban.com/people/' + self._userInfo.user_id, {
-	}, function (err, res, body) {
-		if (err) return cb(err)
-		var CQuery = cheerio.load(body)
-		var userface = CQuery('#db-usr-profile img')
-		if(userface && userface.length) {
-			body = userface.attr('src')
-			cb(null, body)
-		}
-	})
-}
-
 //从豆瓣获取歌词
 SDK.prototype.lyric = function(opt, cb) {
 	var self = this
@@ -198,13 +204,10 @@ SDK.prototype.music_search = function(opt, cb) {
 		if(res.statusCode == 200) {
 			var subjects = []
 			var CQuery = cheerio.load(body)
-			console.log(body)
 
 			//序列化dom数据
 			function serialize(el) {
 				var a = el.find('.nbg').eq(0)
-				//是否可以播放
-//				if(el.find('.start_radio').length) {
 				return {
 					subject: true,
 					url: a.attr('href'),
@@ -214,15 +217,12 @@ SDK.prototype.music_search = function(opt, cb) {
 					name: el.find('.pl2 a').eq(0).text(),
 					intro: el.find('p').eq(0).text()
 				}
-//				}
 			}
 
 			//获取专辑列表
 			var items = CQuery('.item')
-			console.log(items)
 			items.each(function(i, item) {
 				var subject = serialize(CQuery(item))
-				console.log(subject)
 				subject && subjects.push(subject)
 			})
 			cb(null, subjects)
