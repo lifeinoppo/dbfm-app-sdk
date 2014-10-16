@@ -202,7 +202,10 @@ SDK.prototype.music_search = function(opt, cb) {
 	}, function(err, res, body) {
 		if(err) return console.error(err)
 		if(res.statusCode == 200) {
-			var subjects = []
+			var result = {
+				subjects : [],
+				count : 0
+			}
 			var CQuery = cheerio.load(body)
 
 			//序列化dom数据
@@ -218,14 +221,19 @@ SDK.prototype.music_search = function(opt, cb) {
 					intro: el.find('p').eq(0).text()
 				}
 			}
-
 			//获取专辑列表
 			var items = CQuery('.item')
 			items.each(function(i, item) {
 				var subject = serialize(CQuery(item))
-				subject && subjects.push(subject)
+				subject && result.subjects.push(subject)
 			})
-			cb(null, subjects)
+
+			//获取总结果数
+			var count = CQuery('.paginator .count').eq(0)
+			if(count) {
+				result.count = ~~count.text().match(/\d+/)
+			}
+			cb(null, result)
 		} else {
 			console.error(res.request.uri, res.body)
 		}
