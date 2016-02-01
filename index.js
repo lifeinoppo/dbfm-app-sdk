@@ -4,7 +4,7 @@ var cheerio = require('cheerio')
 
 var apis = require('./lib/apis')
 var headers = require('./lib/custom-headers.json')
-var APP_NAME = 'radio_desktop_win'
+var APP_NAME = 'radio_android'
 var APP_VERSION = 100
 var APP_FROM = 'mainsite'
 
